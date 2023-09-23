@@ -17,7 +17,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     filter_backends = (DjangoFilterBackend,)
-    pagination_class = None
+    #  pagination_class = None
     filterset_fields = ('tags__tag__slug', 'author')
 
     def perform_create(self, serializer):

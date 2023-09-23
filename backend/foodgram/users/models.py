@@ -16,13 +16,11 @@ class Subscription(models.Model):
         'User',
         on_delete=models.CASCADE,
         related_name='subscribers',
-        blank=True
     )
     subscriber = models.ForeignKey(
         'User',
         on_delete=models.CASCADE,
         related_name='subscriptions',
-        blank=True
     )
 
 
@@ -31,14 +29,11 @@ class User(AbstractUser):
     email = models.EmailField(
         'Адрес эл.почты',
         max_length=254,
-        blank=True
     )
     role = models.CharField(
         'Роль пользователя',
         max_length=13,
         choices=CHOICES,
-        blank=True,
-        null=True,
         default='user',
     )
 

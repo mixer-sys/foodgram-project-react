@@ -6,6 +6,9 @@ from food.models import (
     Tag, Recipe, Ingredient, RecipeTag, RecipeIngredient, Favorite,
     ShoppingCart
 )
+from users.models import (
+    Subscription, User
+)
 
 
 class ViewSettings(admin.ModelAdmin):
@@ -22,13 +25,14 @@ class TagAdmin(ViewSettings):
 
 class RecipeAdmin(ViewSettings):
     list_display = [field.name for field in Recipe._meta.fields]
-    list_filter = ['tag', 'ingredient']
+    list_filter = ['tag', 'author', 'name']
     empty_value_display = '-пусто-'
 
 
 class IngredientAdmin(ViewSettings):
     list_display = [field.name for field in Ingredient._meta.fields]
     empty_value_display = '-пусто-'
+    list_filter = ['name', ]
 
 
 class RecipeIngredientAdmin(ViewSettings):
@@ -51,6 +55,17 @@ class ShoppingCartAdmin(ViewSettings):
     empty_value_display = '-пусто-'
 
 
+class SubscriptionAdmin(ViewSettings):
+    list_display = [field.name for field in Subscription._meta.fields]
+    empty_value_display = '-пусто-'
+
+
+class UserAdmin(ViewSettings):
+    list_display = [field.name for field in User._meta.fields]
+    empty_value_display = '-пусто-'
+    list_filter = ['username', 'email']
+
+
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(Ingredient, IngredientAdmin)
@@ -58,3 +73,5 @@ admin.site.register(RecipeIngredient, RecipeIngredientAdmin)
 admin.site.register(RecipeTag, RecipeTagAdmin)
 admin.site.register(Favorite, FavoriteAdmin)
 admin.site.register(ShoppingCart, ShoppingCartAdmin)
+admin.site.register(Subscription, SubscriptionAdmin)
+admin.site.register(User, UserAdmin)

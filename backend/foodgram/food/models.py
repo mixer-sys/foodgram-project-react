@@ -7,15 +7,11 @@ class Tag(models.Model):
         'Название тэга',
         max_length=150,
         unique=True,
-        blank=False,
-        null=False,
     )
     color = models.CharField(
         'Цвет тэга',
         max_length=16,
-        unique=True,
-        blank=False,
-        null=False,
+        unique=True
     )
     slug = models.SlugField(
         'Идентификатор',
@@ -51,8 +47,6 @@ class Recipe(models.Model):
     )
     image = models.ImageField(
         upload_to='recipe/images/',
-        null=True,
-        default=None
         )
     name = models.CharField(
         'Название',
@@ -61,7 +55,6 @@ class Recipe(models.Model):
     )
     text = models.TextField(
         'Описание',
-        blank=False,
         help_text='Описание рецепта',
 
     )
@@ -75,9 +68,14 @@ class Recipe(models.Model):
         through='RecipeIngredient',
         #related_name='recipes'
     )
+    pub_date = models.DateTimeField(
+        'Дата публикации',
+        auto_now_add=True,
+        db_index=True
+    )
 
     class Meta:
-        # ordering = ('-year',)
+        ordering = ('pub_date',)
         verbose_name = 'рецепт'
         verbose_name_plural = 'Рецепты'
 
@@ -90,22 +88,15 @@ class RecipeIngredient(models.Model):
         'Recipe',
         on_delete=models.SET_NULL,
         related_name='ingredients',
-        blank=True,
-        null=True,
+
     )
     ingredient = models.ForeignKey(
         'Ingredient',
         on_delete=models.CASCADE,
         related_name='recipes'
     )
-    amount = models.PositiveSmallIntegerField(
-        'Количество',
-        blank=True,
-        help_text='Количество ингредиентов'
-    )
 
     class Meta:
-        # ordering = ('-year',)
         verbose_name = 'рецепт ингредиент'
         verbose_name_plural = 'Рецепты ингредиенты'
         constraints = (
@@ -152,8 +143,11 @@ class Ingredient(models.Model):
     measurement_unit = models.CharField(
         'Единица измерения',
         max_length=200,
-        blank=True,
         help_text='Единица измерения ингредиента'
+    )
+    amount = models.PositiveSmallIntegerField(
+        'Количество',
+        help_text='Количество ингредиентов'
     )
 
     class Meta:
