@@ -15,6 +15,7 @@ class ViewSettings(admin.ModelAdmin):
 class UserAdmin(ViewSettings):
     list_display = [field.name for field in User._meta.fields]
     empty_value_display = '-пусто-'
+    list_filter = ['username', 'email']
 
 
 class SubscriptionAdmin(ViewSettings):
