@@ -1,16 +1,17 @@
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
+from django_filters.rest_framework import DjangoFilterBackend
+
 from food.models import Tag, Recipe, Ingredient, Favorite, ShoppingCart
 from api.serializers import (
     TagSerializer, RecipeSerializer,
     IngredientSerializer, RecipeSmallSerializer
 )
-from users.models import User
-from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from django.http import HttpResponse
 from api.core import get_shopping_cart_txt
-from django_filters.rest_framework import DjangoFilterBackend
+from users.models import User
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
