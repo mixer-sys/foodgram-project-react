@@ -1,14 +1,16 @@
+import base64
+
 from rest_framework import serializers
+
+from django.forms.models import model_to_dict
+from django.core.files.base import ContentFile
 
 from food.models import (
     Tag, Recipe, Ingredient, Favorite, ShoppingCart, RecipeIngredient,
     RecipeTag
 )
-from users.models import User, Subscription
+from users.models import User
 from users.serializers import UserSerializer
-from django.forms.models import model_to_dict
-import base64
-from django.core.files.base import ContentFile
 
 
 class Base64ImageField(serializers.ImageField):
@@ -56,7 +58,10 @@ class TagPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
 
 class RecipeSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
-    tags = TagPrimaryKeyRelatedField(many=True, queryset=Tag.objects.all())
+    tags = TagPrimaryKeyRelatedField(
+        many=True,
+        queryset=Tag.objects.all()
+    )
     ingredients = RecipeIngredientSerializer(many=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
@@ -90,8 +95,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         for ingredient in ingredients:
             id = ingredient.get('id')
             amount = ingredient.get('amount')
-            if not RecipeIngredient.objects.filter(ingredient_id=id, recipe=recipe, amount=amount).exists():
-                RecipeIngredient(ingredient_id=id, recipe=recipe, amount=amount).save()
+            if not RecipeIngredient.objects.filter(ingredient_id=id,
+                                                   recipe=recipe,
+                                                   amount=amount).exists():
+                RecipeIngredient(ingredient_id=id, recipe=recipe,
+                                 amount=amount).save()
         return recipe
 
     def update(self, instance, validated_data):
