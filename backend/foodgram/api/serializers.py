@@ -3,8 +3,6 @@ import base64
 from rest_framework import serializers
 from django.core.files.base import ContentFile
 from django.forms.models import model_to_dict
-
-
 from food.models import (
     Favorite, Ingredient, Recipe, RecipeIngredient,
     RecipeTag, ShoppingCart, Tag

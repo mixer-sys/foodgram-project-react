@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django.db import models
 from django.forms import Textarea
-
 from food.models import (
     Tag, Recipe, Ingredient, RecipeTag, RecipeIngredient, Favorite,
     ShoppingCart
