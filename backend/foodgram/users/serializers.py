@@ -24,4 +24,4 @@ class UserSerializer(UserCreateSerializer):
             return False
         return Subscription.objects.filter(
             user_id=obj.id, subscriber=self.context.get('request').user
-            ).exists() or False
+        ).exists() or False

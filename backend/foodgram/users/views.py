@@ -25,7 +25,7 @@ class APISubscription(APIView):
         if not subscriber.exists():
             Subscription(
                 user_id=kwargs.get('user_id'), subscriber=request.user
-                ).save()
+            ).save()
         serializer = SubscribeSerializer(user)
         data = serializer.data
         data['is_subscribed'] = subscriber.exists()
