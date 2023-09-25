@@ -95,6 +95,10 @@ class RecipeIngredient(models.Model):
         on_delete=models.CASCADE,
         related_name='recipes'
     )
+    amount = models.PositiveSmallIntegerField(
+        'Количество',
+        help_text='Количество ингредиентов'
+    )
 
     class Meta:
         verbose_name = 'рецепт ингредиент'
@@ -144,10 +148,6 @@ class Ingredient(models.Model):
         'Единица измерения',
         max_length=200,
         help_text='Единица измерения ингредиента'
-    )
-    amount = models.PositiveSmallIntegerField(
-        'Количество',
-        help_text='Количество ингредиентов'
     )
 
     class Meta:
