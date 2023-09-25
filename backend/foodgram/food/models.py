@@ -42,7 +42,7 @@ class Recipe(models.Model):
     tag = models.ManyToManyField(
         'Tag',
         verbose_name='Тэги',
-        #related_name='recipes',
+        #  related_name='recipes',
         through='RecipeTag'
     )
     image = models.ImageField(
@@ -66,7 +66,7 @@ class Recipe(models.Model):
         'Ingredient',
         verbose_name='Ингредиенты',
         through='RecipeIngredient',
-        #related_name='recipes'
+        #  related_name='recipes'
     )
     pub_date = models.DateTimeField(
         'Дата публикации',
