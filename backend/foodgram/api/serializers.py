@@ -84,18 +84,18 @@ class RecipeSerializer(serializers.ModelSerializer):
         recipe, status = Recipe.objects.get_or_create(**validated_data)
         recipe.image = image
         recipe.save()
+        RecipeTag.objects.filter(recipe=recipe).delete()
         for tag in tags:
-            if not RecipeTag.objects.filter(recipe=recipe, tag=tag).exists():
-                RecipeTag(recipe=recipe, tag=tag).save()
+            RecipeTag(recipe=recipe, tag=tag).save()
 
+        RecipeIngredient.objects.filter(recipe=recipe).delete()
         for ingredient in ingredients:
             id = ingredient.get('id')
             amount = ingredient.get('amount')
-            if not RecipeIngredient.objects.filter(ingredient_id=id,
-                                                   recipe=recipe,
-                                                   amount=amount).exists():
-                RecipeIngredient(ingredient_id=id, recipe=recipe,
-                                 amount=amount).save()
+            RecipeIngredient.objects.get_or_create(
+                ingredient_id=id, recipe=recipe,
+                amount=amount
+            )
         return recipe
 
     def update(self, instance, validated_data):
@@ -104,6 +104,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 
 class RecipeSmallSerializer(serializers.ModelSerializer):
+    image = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Recipe
