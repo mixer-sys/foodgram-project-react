@@ -1,12 +1,10 @@
 import base64
 
-from rest_framework import serializers
 from django.core.files.base import ContentFile
 from django.forms.models import model_to_dict
-from food.models import (
-    Favorite, Ingredient, Recipe, RecipeIngredient,
-    RecipeTag, ShoppingCart, Tag
-)
+from rest_framework import serializers
+from food.models import Favorite, Ingredient, Recipe
+from food.models import RecipeIngredient, RecipeTag, ShoppingCart, Tag
 from users.models import User
 from users.serializers import UserSerializer
 

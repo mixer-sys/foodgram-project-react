@@ -1,11 +1,8 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import SimpleRouter
-from api.views import (
-    APITag, RecipeViewSet,
-    APIIngredient,
-    APIFavorite,
-    APIShoppingCart
-)
+from api.views import APITag, APIIngredient
+from api.views import APIFavorite
+from api.views import APIShoppingCart, RecipeViewSet
 from users.views import APISubscription
 
 app_name = 'api'
