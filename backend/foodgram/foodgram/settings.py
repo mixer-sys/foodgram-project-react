@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-i*-+aj=-#z1o_%xtdt977@zosrb9js_6e@+t-=d9#c-x)4j%o4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'foodgr4m.sytes.net']
 CSRF_TRUSTED_ORIGINS = ['https://*.sytes.net']
 
 # Application definition
