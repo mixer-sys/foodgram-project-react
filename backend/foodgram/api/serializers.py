@@ -70,10 +70,14 @@ class RecipeSerializer(serializers.ModelSerializer):
                   'name', 'image', 'text', 'cooking_time')
 
     def get_is_favorited(self, obj):
+        if self.context.get('request').user.id is None:
+            return False
         return Favorite.objects.filter(
             recipe_id=obj.id, user=self.context.get('request').user).exists()
 
     def get_is_in_shopping_cart(self, obj):
+        if self.context.get('request').user.id is None:
+            return False
         return ShoppingCart.objects.filter(
             recipe_id=obj.id, user=self.context.get('request').user).exists()
 
