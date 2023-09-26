@@ -1,7 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
@@ -18,12 +17,28 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     filter_backends = (DjangoFilterBackend,)
-    permission_classes = (IsAuthenticatedOrReadOnly,)
     #  pagination_class = None
-    filterset_fields = ('tags__tag__slug', 'author')
+    #  filterset_fields = ('tags', 'author')
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    def get_queryset(self):
+        params = ((self.request.query_params))
+        tags = params.get('tags')
+        is_in_shopping_cart = params.get('is_in_shopping_cart')
+        is_favorited = params.get('is_favorited')
+        if tags:
+            return Recipe.objects.filter(tag__slug=tags)
+        if is_in_shopping_cart:
+            if self.request.user.id is not None:
+                return Recipe.objects.filter(
+                    shoppingcarts__user=self.request.user)
+        if is_favorited:
+            if self.request.user.id is not None:
+                return Recipe.objects.filter(
+                    favorites__user=self.request.user)
+        return super().get_queryset()
 
 
 class APITag(APIView):
