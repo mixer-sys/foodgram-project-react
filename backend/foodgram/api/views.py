@@ -18,7 +18,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     filter_backends = (DjangoFilterBackend,)
     #  pagination_class = None
-    #  filterset_fields = ('tags', 'author')
+    filterset_fields = ('author',)
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -28,17 +28,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
         tags = params.get('tags')
         is_in_shopping_cart = params.get('is_in_shopping_cart')
         is_favorited = params.get('is_favorited')
+        recipes = super().get_queryset()
         if tags:
-            return Recipe.objects.filter(tag__slug=tags)
+            recipes = recipes.filter(tag__slug=tags)
         if is_in_shopping_cart:
             if self.request.user.id is not None:
-                return Recipe.objects.filter(
+                recipes = recipes.filter(
                     shoppingcarts__user=self.request.user)
         if is_favorited:
             if self.request.user.id is not None:
-                return Recipe.objects.filter(
+                recipes = recipes.filter(
                     favorites__user=self.request.user)
-        return super().get_queryset()
+        return recipes
 
 
 class APITag(APIView):
