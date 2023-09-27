@@ -103,7 +103,6 @@ class RecipeSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-
         return self.create(validated_data)
 
 
