@@ -96,7 +96,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         for ingredient in ingredients:
             id = ingredient.get('id')
             amount = ingredient.get('amount')
-            if not RecipeIngredient.objects.filter(ingredient_id=id, recipe=recipe).exists():
+            if not RecipeIngredient.objects.filter(ingredient_id=id,
+                                                   recipe=recipe).exists():
                 RecipeIngredient.objects.get_or_create(
                     ingredient_id=id, recipe=recipe,
                     amount=amount
