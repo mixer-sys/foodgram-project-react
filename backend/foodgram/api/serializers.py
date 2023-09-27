@@ -88,8 +88,9 @@ class RecipeSerializer(serializers.ModelSerializer):
         recipe, status = Recipe.objects.get_or_create(**validated_data)
         recipe.image = image
         recipe.save()
-        RecipeTag.objects.filter(recipe=recipe).delete()
+
         for tag in tags:
+            RecipeTag.objects.filter(recipe=recipe, tag=tag).delete()
             RecipeTag(recipe=recipe, tag=tag).save()
 
         RecipeIngredient.objects.filter(recipe=recipe).delete()
@@ -103,6 +104,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
+        print(validated_data)
         return self.create(validated_data)
 
 
