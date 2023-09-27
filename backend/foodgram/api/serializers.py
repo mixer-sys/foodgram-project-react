@@ -110,10 +110,11 @@ class RecipeSerializer(serializers.ModelSerializer):
                     recipe=recipe, ingredient_id=id
                 )
                 recipe_ingredient.amount = amount
+                recipe_ingredient.save()
         return recipe
 
     def update(self, instance, validated_data):
-        print(validated_data)
+
         return self.create(validated_data)
 
 
