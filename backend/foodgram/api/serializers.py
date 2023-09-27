@@ -95,8 +95,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         for tag in tags:
             if not RecipeTag.objects.filter(recipe=recipe, tag=tag).exists():
                 RecipeTag(recipe=recipe, tag=tag).save()
-
-        RecipeIngredient.objects.filter(recipe=recipe).delete()
+        ingredients = self.context.get('request').data.get('ingredients')
         for ingredient in ingredients:
             id = ingredient.get('id')
             amount = ingredient.get('amount')
