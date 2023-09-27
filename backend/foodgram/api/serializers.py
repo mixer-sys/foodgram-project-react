@@ -32,13 +32,16 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    id = serializers.SerializerMethodField()
     name = serializers.SerializerMethodField()
     measurement_unit = serializers.SerializerMethodField()
 
     class Meta:
         model = RecipeIngredient
         fields = ('id', 'name', 'measurement_unit', 'amount')
+
+    def get_id(self, obj):
+        return obj.ingredient.id
 
     def get_name(self, obj):
         return obj.ingredient.name
@@ -90,17 +93,23 @@ class RecipeSerializer(serializers.ModelSerializer):
         recipe.save()
 
         for tag in tags:
-            RecipeTag.objects.filter(recipe=recipe, tag=tag).delete()
-            RecipeTag(recipe=recipe, tag=tag).save()
+            if not RecipeTag.objects.filter(recipe=recipe, tag=tag).exists():
+                RecipeTag(recipe=recipe, tag=tag).save()
 
         RecipeIngredient.objects.filter(recipe=recipe).delete()
         for ingredient in ingredients:
             id = ingredient.get('id')
             amount = ingredient.get('amount')
-            RecipeIngredient(
-                ingredient_id=id, recipe=recipe,
-                amount=amount
-            ).save()
+            if not RecipeIngredient.objects.filter(recipe=recipe,
+                                                   ingredient_id=id).exists():
+                RecipeIngredient(
+                    ingredient_id=id, recipe=recipe,
+                    amount=amount
+                ).save()
+            else:
+                recipe_ingredient = RecipeIngredient.objects.get(recipe=recipe,
+                                                   ingredient_id=id)
+                recipe_ingredient.amount= amount
         return recipe
 
     def update(self, instance, validated_data):
