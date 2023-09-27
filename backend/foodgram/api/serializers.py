@@ -96,10 +96,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         for ingredient in ingredients:
             id = ingredient.get('id')
             amount = ingredient.get('amount')
-            RecipeIngredient.objects.get_or_create(
-                ingredient_id=id, recipe=recipe,
-                amount=amount
-            )
+            if not RecipeIngredient.objects.filter(ingredient_id=id, recipe=recipe).exists():
+                RecipeIngredient.objects.get_or_create(
+                    ingredient_id=id, recipe=recipe,
+                    amount=amount
+                )
         return recipe
 
     def update(self, instance, validated_data):
