@@ -24,7 +24,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user)
 
     def perform_update(self, serializer):
-        recipe_id = self.kwargs.get('recipe_id')
+        recipe_id = self.kwargs.get('pk')
         recipe = Recipe.objects.filter(id=recipe_id)
         recipe.delete()
         serializer.save(author=self.request.user)
