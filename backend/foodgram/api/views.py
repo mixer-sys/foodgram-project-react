@@ -7,7 +7,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from food.models import Tag, Recipe, Ingredient, Favorite, ShoppingCart
 from api.serializers import (
     TagSerializer, RecipeSerializer,
-    IngredientSerializer, RecipeSmallSerializer
+    IngredientSerializer, RecipeSmallSerializer,
+    RecipeCreateSerializer
 )
 from api.core import get_shopping_cart_txt
 from users.models import User
@@ -15,18 +16,21 @@ from users.models import User
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
     filter_backends = (DjangoFilterBackend,)
     #  pagination_class = None
     filterset_fields = ('author',)
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return RecipeSerializer
+        return RecipeCreateSerializer
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
     def perform_update(self, serializer):
         recipe_id = self.kwargs.get('pk')
-        recipe = Recipe.objects.filter(id=recipe_id)
-        recipe.delete()
+        Recipe.objects.get(id=recipe_id).delete()
         serializer.save(author=self.request.user)
 
     def get_queryset(self):

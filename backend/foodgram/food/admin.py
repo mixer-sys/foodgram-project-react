@@ -32,7 +32,9 @@ class IngredientAdmin(ViewSettings):
 
 
 class RecipeIngredientAdmin(ViewSettings):
+
     list_display = [field.name for field in RecipeIngredient._meta.fields]
+    list_display += ['amount', ]
     empty_value_display = '-пусто-'
 
 
