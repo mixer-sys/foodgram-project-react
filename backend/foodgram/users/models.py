@@ -14,14 +14,20 @@ CHOICES = (
 class Subscription(models.Model):
     user = models.ForeignKey(
         'User',
+        verbose_name='Пользователи',
         on_delete=models.CASCADE,
         related_name='subscribers',
     )
     subscriber = models.ForeignKey(
         'User',
+        verbose_name='Подписчики',
         on_delete=models.CASCADE,
         related_name='subscriptions',
     )
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
 
 
 class User(AbstractUser):
