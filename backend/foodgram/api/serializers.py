@@ -19,10 +19,14 @@ class Base64ImageField(serializers.ImageField):
 
 
 class TagSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Tag
         fields = ('id', 'name', 'color', 'slug')
+
+
+class TagPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
+    def to_representation(self, value):
+        return model_to_dict(value.tag)
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -31,28 +35,21 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit')
 
 
-class RecipeIngredientSerializer(serializers.ModelSerializer):
-    id = serializers.SerializerMethodField()
-    name = serializers.SerializerMethodField()
-    measurement_unit = serializers.SerializerMethodField()
+class IngredientPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
+    def to_representation(self, value):
+        return model_to_dict(value.ingredient)
+
+
+class IngredientCreateSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField()
+    amount = serializers.IntegerField()
 
     class Meta:
-        model = RecipeIngredient
-        fields = ('id', 'name', 'measurement_unit', 'amount')
+        model = Ingredient
+        fields = ('id', 'amount')
 
-    def get_id(self, obj):
-        return obj.ingredient.id
-
-    def get_name(self, obj):
-        return obj.ingredient.name
-
-    def get_measurement_unit(self, obj):
-        return obj.ingredient.measurement_unit
-
-
-class TagPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
     def to_representation(self, value):
-        return model_to_dict(value.tag)
+        return model_to_dict(value.ingredient)
 
 
 class RecipeSerializer(serializers.ModelSerializer):
@@ -61,7 +58,9 @@ class RecipeSerializer(serializers.ModelSerializer):
         many=True,
         queryset=Tag.objects.all()
     )
-    ingredients = RecipeIngredientSerializer(many=True)
+    ingredients = IngredientPrimaryKeyRelatedField(
+        many=True, queryset=Ingredient.objects.all()
+    )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
     image = Base64ImageField(required=False, allow_null=True)
@@ -84,6 +83,10 @@ class RecipeSerializer(serializers.ModelSerializer):
         return ShoppingCart.objects.filter(
             recipe_id=obj.id, user=self.context.get('request').user).exists()
 
+
+class RecipeCreateSerializer(RecipeSerializer):
+    ingredients = IngredientCreateSerializer(many=True)
+
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
@@ -91,30 +94,25 @@ class RecipeSerializer(serializers.ModelSerializer):
         recipe, status = Recipe.objects.get_or_create(**validated_data)
         recipe.image = image
         recipe.save()
-
         for tag in tags:
-            if not RecipeTag.objects.filter(recipe=recipe, tag=tag).exists():
-                RecipeTag(recipe=recipe, tag=tag).save()
-        ingredients = self.context.get('request').data.get('ingredients')
+            tag, status = RecipeTag.objects.get_or_create(
+                recipe=recipe, tag=tag
+            )
         for ingredient in ingredients:
             id = ingredient.get('id')
             amount = ingredient.get('amount')
-            if not RecipeIngredient.objects.filter(recipe=recipe,
-                                                   ingredient_id=id).exists():
-                RecipeIngredient(
-                    ingredient_id=id, recipe=recipe,
-                    amount=amount
-                ).save()
-            else:
-                recipe_ingredient = RecipeIngredient.objects.get(
-                    recipe=recipe, ingredient_id=id
-                )
-                recipe_ingredient.amount = amount
-                recipe_ingredient.save()
+            table_ingredient = Ingredient.objects.get(id=id)
+            ingredient, status = Ingredient.objects.get_or_create(
+                name=table_ingredient.name,
+                measurement_unit=table_ingredient.measurement_unit,
+                amount=amount
+            )
+            recipe_ingredient, status = RecipeIngredient.objects.get_or_create(
+                recipe=recipe, ingredient=ingredient
+            )
         return recipe
 
     def update(self, instance, validated_data):
-
         return self.create(validated_data)
 
 

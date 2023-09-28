@@ -17,6 +17,6 @@ def get_shopping_cart_txt(shoppingcartrecipes):
     for name in ingredients_amounts:
         measurement_unit = ingredients_measurement_unit.get(name)
         amount = ingredients_amounts.get(name)
-        line = f'*** {name} ({measurement_unit}) -- {amount}'
+        line = f'*** {name} ({measurement_unit}) -- {amount}\n'
         file += line
     return file

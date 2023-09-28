@@ -95,10 +95,6 @@ class RecipeIngredient(models.Model):
         on_delete=models.CASCADE,
         related_name='recipes'
     )
-    amount = models.PositiveSmallIntegerField(
-        'Количество',
-        help_text='Количество ингредиентов'
-    )
 
     class Meta:
         verbose_name = 'рецепт ингредиент'
@@ -109,6 +105,9 @@ class RecipeIngredient(models.Model):
                 name='unique_recipe_ingredient'
             ),
         )
+
+    def amount(self):
+        return self.ingredient.amount
 
 
 class RecipeTag(models.Model):
@@ -141,13 +140,16 @@ class Ingredient(models.Model):
     name = models.CharField(
         'Название',
         max_length=200,
-        unique=True,
         help_text='Название ингредиента'
     )
     measurement_unit = models.CharField(
         'Единица измерения',
         max_length=200,
         help_text='Единица измерения ингредиента'
+    )
+    amount = models.PositiveSmallIntegerField(
+        'Количество',
+        help_text='Количество ингредиентов'
     )
 
     class Meta:
