@@ -67,7 +67,7 @@ DJOSER = {
         "user": "users.serializers.UserSerializer"
     },
     "PERMISSIONS": {
-        "user": ["rest_framework.permissions.IsAuthenticated"],
+        "user": ["rest_framework.permissions.IsAuthenticatedOrReadOnly"],
     },
     "HIDE_USERS": False,
 }
