@@ -31,7 +31,6 @@ class Subscription(models.Model):
 
 
 class User(AbstractUser):
-
     email = models.EmailField(
         'Адрес эл.почты',
         max_length=254,
