@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'djoser',
     'users',
     'api',
-    'food'
+    'food',
+    'colorfield'
 ]
 
 REST_FRAMEWORK = {

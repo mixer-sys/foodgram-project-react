@@ -1,3 +1,4 @@
+from colorfield.fields import ColorField
 from django.db import models
 from users.models import User
 
@@ -9,11 +10,12 @@ class Tag(models.Model):
         max_length=150,
         unique=True,
     )
-    color = models.CharField(
+    color = ColorField(
         'Цвет тэга',
         help_text='Цвет тэга',
         max_length=16,
-        unique=True
+        unique=True,
+        default='#FF0000'
     )
     slug = models.SlugField(
         'Идентификатор',
@@ -84,6 +86,9 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
+
+    def count_in_favorite(self):
+        return self.favorites.count()
 
 
 class RecipeIngredient(models.Model):

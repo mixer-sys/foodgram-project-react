@@ -21,6 +21,7 @@ class TagAdmin(ViewSettings):
 
 class RecipeAdmin(ViewSettings):
     list_display = [field.name for field in Recipe._meta.fields]
+    list_display += ['count_in_favorite', ]
     list_filter = ['tag', 'author', 'name']
     empty_value_display = '-пусто-'
 
@@ -32,7 +33,6 @@ class IngredientAdmin(ViewSettings):
 
 
 class RecipeIngredientAdmin(ViewSettings):
-
     list_display = [field.name for field in RecipeIngredient._meta.fields]
     list_display += ['amount', ]
     empty_value_display = '-пусто-'
