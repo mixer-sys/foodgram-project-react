@@ -27,7 +27,7 @@ class RecipeAdmin(ViewSettings):
 
 
 class IngredientAdmin(ViewSettings):
-    list_display = [field.name for field in Ingredient._meta.fields]
+    list_display = ['id', 'name', 'measurement_unit']
     empty_value_display = '-пусто-'
     list_filter = ['name', ]
 
