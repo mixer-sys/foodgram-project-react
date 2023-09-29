@@ -11,13 +11,13 @@ from api.serializers import (
     RecipeCreateSerializer
 )
 from api.core import get_shopping_cart_txt
+from api.permissions import OwnerOrReadOnly
 from users.models import User
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend,)
-    #  pagination_class = None
+    permission_classes = (OwnerOrReadOnly,)
     filterset_fields = ('author',)
 
     def get_serializer_class(self):
@@ -38,9 +38,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         tags = params.get('tags')
         is_in_shopping_cart = params.get('is_in_shopping_cart')
         is_favorited = params.get('is_favorited')
-        recipes = super().get_queryset()
+        recipes = Recipe.objects.all()
         if tags:
             recipes = recipes.filter(tag__slug=tags)
+            for tag in tags:
+                recipes.union(Recipe.objects.filter(tag__slug=tag))
         if is_in_shopping_cart:
             if self.request.user.id is not None:
                 recipes = recipes.filter(
@@ -49,7 +51,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             if self.request.user.id is not None:
                 recipes = recipes.filter(
                     favorites__user=self.request.user)
-        return recipes
+        return recipes.all()
 
 
 class APITag(APIView):

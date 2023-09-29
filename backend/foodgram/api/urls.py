@@ -8,7 +8,7 @@ from users.views import APISubscription
 app_name = 'api'
 
 router_api = SimpleRouter()
-router_api.register(r'recipes', RecipeViewSet)
+router_api.register(r'recipes', RecipeViewSet, basename='recipes')
 
 urlpatterns = [
     path('ingredients/', APIIngredient.as_view(), name='ingredients'),
