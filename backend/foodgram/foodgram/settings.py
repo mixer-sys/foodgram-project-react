@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'users',
     'api',
     'food',
-    'colorfield'
+    'colorfield',
+    'import_export',
 ]
 
 REST_FRAMEWORK = {

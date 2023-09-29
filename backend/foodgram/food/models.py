@@ -160,7 +160,8 @@ class Ingredient(models.Model):
     )
     amount = models.PositiveSmallIntegerField(
         'Количество',
-        help_text='Количество ингредиентов'
+        help_text='Количество ингредиентов',
+        null=True,
     )
 
     class Meta:
