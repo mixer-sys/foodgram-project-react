@@ -8,6 +8,15 @@ from food.models import RecipeIngredient, RecipeTag, ShoppingCart, Tag
 from users.models import User
 from users.serializers import UserSerializer
 
+REQUIRED_INGREDIENTS_ERROR = 'Required ingredients'
+REQUIRED_TAGS_ERROR = 'Required tags'
+REQUIRED_IMAGE_ERROR = 'Required image'
+NO_SUCH_INGREDIENTS_ERROR = 'No such ingredient'
+FEW_INGREDIENTS_ERROR = 'Few ingredients'
+NOT_UNIQUE_INGREDIENTS_ERROR = 'There are not uniq ingredients'
+NOT_UNIQUE_TAGS_ERROR = 'There are not uniq tags'
+COOKING_TIME_ERROR = 'Cooking time should be more than 1'
+
 
 class Base64ImageField(serializers.ImageField):
     def to_internal_value(self, data):
@@ -94,13 +103,13 @@ class RecipeCreateSerializer(RecipeSerializer):
 
     def create(self, validated_data):
         if 'ingredients' not in validated_data:
-            raise serializers.ValidationError('No ingredients')
+            raise serializers.ValidationError(REQUIRED_INGREDIENTS_ERROR)
         ingredients = validated_data.pop('ingredients')
         if 'tags' not in validated_data:
-            raise serializers.ValidationError('No tags')
+            raise serializers.ValidationError(REQUIRED_TAGS_ERROR)
         tags = validated_data.pop('tags')
         if 'image' not in validated_data:
-            raise serializers.ValidationError('No image')
+            raise serializers.ValidationError(REQUIRED_IMAGE_ERROR)
         image = validated_data.pop('image')
         recipe, status = Recipe.objects.get_or_create(**validated_data)
         recipe.image = image
@@ -128,32 +137,32 @@ class RecipeCreateSerializer(RecipeSerializer):
 
     def validate_ingredients(self, value):
         if not value:
-            raise serializers.ValidationError("No ingredients")
+            raise serializers.ValidationError(REQUIRED_INGREDIENTS_ERROR)
         keys = list()
         for ingredient in value:
             if not Ingredient.objects.filter(id=ingredient.get('id')).exists():
-                raise serializers.ValidationError("No such ingredient")
+                raise serializers.ValidationError(NO_SUCH_INGREDIENTS_ERROR)
             if ingredient.get('amount') < 1:
-                raise serializers.ValidationError('Few ingredients')
+                raise serializers.ValidationError(FEW_INGREDIENTS_ERROR)
             keys.append(ingredient.get('id'))
         if len(keys) > len(set(keys)):
-            raise serializers.ValidationError('There are not uniq ingredients')
+            raise serializers.ValidationError(NOT_UNIQUE_INGREDIENTS_ERROR)
         return value
 
     def validate_tags(self, value):
         if not value:
-            raise serializers.ValidationError('No tags')
+            raise serializers.ValidationError(REQUIRED_TAGS_ERROR)
         keys = list()
         for tag in value:
             keys.append(tag.id)
         if len(keys) > len(set(keys)):
-            raise serializers.ValidationError('There are not uniq tags')
+            raise serializers.ValidationError(NOT_UNIQUE_TAGS_ERROR)
         return value
 
     def validate_cooking_time(self, value):
         if value < 1:
             raise serializers.ValidationError(
-                "Cooking time should be more than 1")
+                COOKING_TIME_ERROR)
         return value
 
 
