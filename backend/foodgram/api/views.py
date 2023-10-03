@@ -41,7 +41,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         is_favorited = params.get('is_favorited')
         recipes = Recipe.objects.all()
         if tags:
-            recipes = Recipe.objects.filter(tag__slug__in=tags)
+            recipes = Recipe.objects.filter(
+                tag__slug__in=tags
+            ).distinct()
         if is_in_shopping_cart:
             if self.request.user.id is not None:
                 recipes = recipes.filter(
