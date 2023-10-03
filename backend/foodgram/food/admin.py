@@ -63,7 +63,6 @@ class ShoppingCartAdmin(ViewSettings):
 
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Recipe, RecipeAdmin)
-#  admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Ingredient, IngredientResourceAdmin)
 admin.site.register(RecipeIngredient, RecipeIngredientAdmin)
 admin.site.register(RecipeTag, RecipeTagAdmin)
