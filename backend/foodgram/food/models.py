@@ -52,11 +52,14 @@ class Recipe(models.Model):
         'Изображение',
         help_text='Изображение рецепта',
         upload_to='recipe/images/',
+        blank=False,
+        null=False
     )
     name = models.CharField(
         'Название',
         max_length=200,
-        help_text='Название рецепта'
+        help_text='Название рецепта',
+        blank=False
     )
     text = models.TextField(
         'Описание',
@@ -64,13 +67,14 @@ class Recipe(models.Model):
     )
     cooking_time = models.PositiveSmallIntegerField(
         'Время',
-        help_text='Время приготовления (в минутах)'
+        help_text='Время приготовления (в минутах)',
+        blank=False
     )
     ingredient = models.ManyToManyField(
         'Ingredient',
         verbose_name='Ингредиенты',
         help_text='Ингредиенты',
-        through='RecipeIngredient'
+        through='RecipeIngredient',
     )
     pub_date = models.DateTimeField(
         'Дата публикации',
@@ -160,7 +164,8 @@ class Ingredient(models.Model):
     )
     amount = models.PositiveSmallIntegerField(
         'Количество',
-        help_text='Количество ингредиентов'
+        help_text='Количество ингредиентов',
+        null=True,
     )
 
     class Meta:

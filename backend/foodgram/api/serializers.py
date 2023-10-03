@@ -56,40 +56,51 @@ class RecipeSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     tags = TagPrimaryKeyRelatedField(
         many=True,
-        queryset=Tag.objects.all()
+        queryset=Tag.objects.all(),
     )
     ingredients = IngredientPrimaryKeyRelatedField(
-        many=True, queryset=Ingredient.objects.all()
+        many=True, queryset=Ingredient.objects.all(),
     )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
-    image = Base64ImageField(required=False, allow_null=True)
+    image = Base64ImageField(allow_null=True)
 
     class Meta:
         model = Recipe
         fields = ('id', 'tags', 'author', 'ingredients',
                   'is_favorited', 'is_in_shopping_cart',
                   'name', 'image', 'text', 'cooking_time')
+        extra_kwargs = {'ingredients': {'required': True}}
 
     def get_is_favorited(self, obj):
         if self.context.get('request').user.id is None:
             return False
         return Favorite.objects.filter(
-            recipe_id=obj.id, user=self.context.get('request').user).exists()
+            recipe_id=obj.id,
+            user=self.context.get('request').user
+        ).exists()
 
     def get_is_in_shopping_cart(self, obj):
         if self.context.get('request').user.id is None:
             return False
         return ShoppingCart.objects.filter(
-            recipe_id=obj.id, user=self.context.get('request').user).exists()
+            recipe_id=obj.id,
+            user=self.context.get('request').user
+        ).exists()
 
 
 class RecipeCreateSerializer(RecipeSerializer):
     ingredients = IngredientCreateSerializer(many=True)
 
     def create(self, validated_data):
+        if 'ingredients' not in validated_data:
+            raise serializers.ValidationError('No ingredients')
         ingredients = validated_data.pop('ingredients')
+        if 'tags' not in validated_data:
+            raise serializers.ValidationError('No tags')
         tags = validated_data.pop('tags')
+        if 'image' not in validated_data:
+            raise serializers.ValidationError('No image')
         image = validated_data.pop('image')
         recipe, status = Recipe.objects.get_or_create(**validated_data)
         recipe.image = image
@@ -115,6 +126,36 @@ class RecipeCreateSerializer(RecipeSerializer):
     def update(self, instance, validated_data):
         return self.create(validated_data)
 
+    def validate_ingredients(self, value):
+        if not value:
+            raise serializers.ValidationError("No ingredients")
+        keys = list()
+        for ingredient in value:
+            if not Ingredient.objects.filter(id=ingredient.get('id')).exists():
+                raise serializers.ValidationError("No such ingredient")
+            if ingredient.get('amount') < 1:
+                raise serializers.ValidationError('Few ingredients')
+            keys.append(ingredient.get('id'))
+        if len(keys) > len(set(keys)):
+            raise serializers.ValidationError('There are not uniq ingredients')
+        return value
+
+    def validate_tags(self, value):
+        if not value:
+            raise serializers.ValidationError('No tags')
+        keys = list()
+        for tag in value:
+            keys.append(tag.id)
+        if len(keys) > len(set(keys)):
+            raise serializers.ValidationError('There are not uniq tags')
+        return value
+
+    def validate_cooking_time(self, value):
+        if value < 1:
+            raise serializers.ValidationError(
+                "Cooking time should be more than 1")
+        return value
+
 
 class RecipeSmallSerializer(serializers.ModelSerializer):
     image = Base64ImageField(required=False, allow_null=True)
@@ -125,7 +166,7 @@ class RecipeSmallSerializer(serializers.ModelSerializer):
 
 
 class SubscribeSerializer(serializers.ModelSerializer):
-    recipes = RecipeSmallSerializer(many=True)
+    recipes = serializers.SerializerMethodField()
     is_subscribed = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
 
@@ -143,3 +184,8 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
+
+    def get_recipes(self, obj):
+        recipes_limit = (self._context.get('recipes_limit'))
+        recipes = obj.recipes.all()[:recipes_limit]
+        return RecipeSmallSerializer(recipes, many=True).data

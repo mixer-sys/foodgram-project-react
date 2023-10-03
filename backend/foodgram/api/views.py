@@ -1,6 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
@@ -16,9 +17,10 @@ from users.models import User
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    filter_backends = (DjangoFilterBackend,)
-    permission_classes = (OwnerOrReadOnly,)
+    filter_backends = (DjangoFilterBackend, )
     filterset_fields = ('author',)
+    permission_classes = (IsAuthenticatedOrReadOnly, OwnerOrReadOnly)
+    queryset = Recipe.objects.all()
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -29,20 +31,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user)
 
     def perform_update(self, serializer):
-        recipe_id = self.kwargs.get('pk')
-        Recipe.objects.get(id=recipe_id).delete()
         serializer.save(author=self.request.user)
 
     def get_queryset(self):
         params = ((self.request.query_params))
+        params = (dict(params))
         tags = params.get('tags')
         is_in_shopping_cart = params.get('is_in_shopping_cart')
         is_favorited = params.get('is_favorited')
         recipes = Recipe.objects.all()
         if tags:
-            recipes = recipes.filter(tag__slug=tags)
-            for tag in tags:
-                recipes.union(Recipe.objects.filter(tag__slug=tag))
+            recipes = Recipe.objects.filter(tag__slug__in=tags)
         if is_in_shopping_cart:
             if self.request.user.id is not None:
                 recipes = recipes.filter(
@@ -65,8 +64,14 @@ class APITag(APIView):
 
 
 class APIIngredient(APIView):
+
     def get(self, request, ingredient_id=None):
+        params = request.query_params
         ingredients = Ingredient.objects.all()
+        if params:
+            ingredients = ingredients.filter(
+                name__startswith=params.get('name')
+            )
         serializer = IngredientSerializer(ingredients, many=True)
         if ingredient_id:
             ingredients = get_object_or_404(Ingredient, id=ingredient_id)
@@ -76,23 +81,32 @@ class APIIngredient(APIView):
 
 class APIFavorite(APIView):
     def post(self, request, *args, **kwargs):
-        recipe = get_object_or_404(Recipe, id=kwargs.get('recipe_id'))
+        recipe = Recipe.objects.filter(id=kwargs.get('recipe_id'))
+        if not recipe.exists():
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        recipe = recipe.first()
         favorite = recipe.favorites.filter(user=request.user)
-        if not favorite.exists():
-            Favorite(
-                user=request.user, recipe_id=kwargs.get('recipe_id')).save()
+        if favorite.exists():
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        Favorite(
+            user=request.user, recipe_id=kwargs.get('recipe_id')).save()
         serializer = RecipeSmallSerializer(recipe)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
         recipe = get_object_or_404(Recipe, id=kwargs.get('recipe_id'))
         favorite = recipe.favorites.filter(user=request.user)
-        if favorite.exists():
-            favorite.delete()
+        if not favorite.exists():
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        favorite.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class APIShoppingCart(APIView):
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+
     def get(self, request, recipe_id=None):
         user = get_object_or_404(User, username=request.user)
         shoppingcartrecipes = user.shoppingcartrecipes.all()
@@ -104,17 +118,26 @@ class APIShoppingCart(APIView):
         return response
 
     def post(self, request, *args, **kwargs):
-        recipe = get_object_or_404(Recipe, id=kwargs.get('recipe_id'))
+        recipe = Recipe.objects.filter(id=kwargs.get('recipe_id'))
+        if not recipe.exists():
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        recipe = recipe.first()
         shopping_cart = recipe.shoppingcarts.filter(user=request.user)
-        if not shopping_cart.exists():
-            ShoppingCart(
-                user=request.user, recipe_id=kwargs.get('recipe_id')).save()
+        if shopping_cart.exists():
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        ShoppingCart(
+            user=request.user, recipe_id=kwargs.get('recipe_id')).save()
         serializer = RecipeSmallSerializer(recipe)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
         recipe = get_object_or_404(Recipe, id=kwargs.get('recipe_id'))
+        if recipe is None:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         shopping_cart = recipe.shoppingcarts.filter(user=request.user)
-        if shopping_cart.exists():
-            shopping_cart.delete()
+        if not shopping_cart.exists():
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        shopping_cart.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

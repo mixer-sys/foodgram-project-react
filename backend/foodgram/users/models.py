@@ -28,12 +28,20 @@ class Subscription(models.Model):
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
+        constraints = (
+            models.UniqueConstraint(
+                fields=('user', 'subscriber'),
+                name='unique_subscriptions'
+            ),
+        )
 
 
 class User(AbstractUser):
     email = models.EmailField(
         'Адрес эл.почты',
         max_length=254,
+        unique=True,
+        blank=False
     )
     role = models.CharField(
         'Роль пользователя',
@@ -41,6 +49,8 @@ class User(AbstractUser):
         choices=CHOICES,
         default='user',
     )
+    first_name = models.CharField("Имя", max_length=150, blank=False)
+    last_name = models.CharField("Фамилия", max_length=150, blank=False)
 
     class Meta:
         verbose_name = 'Пользователь'
