@@ -1,8 +1,10 @@
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
+
 from django.contrib import admin
 from django.db import models
 from django.forms import Textarea
+
 from food.models import (
     Tag, Recipe, Ingredient, RecipeTag, RecipeIngredient, Favorite,
     ShoppingCart
@@ -23,9 +25,9 @@ class IngredientResource(resources.ModelResource):
 
 class IngredientResourceAdmin(ImportExportModelAdmin):
     resource_classes = [IngredientResource]
-    list_display = ['id', 'name', 'measurement_unit']
+    list_display = ('id', 'name', 'measurement_unit')
     empty_value_display = '-пусто-'
-    list_filter = ['name', ]
+    list_filter = ('name', )
 
 
 class TagAdmin(ViewSettings):
@@ -35,14 +37,14 @@ class TagAdmin(ViewSettings):
 
 class RecipeAdmin(ViewSettings):
     list_display = [field.name for field in Recipe._meta.fields]
-    list_display += ['count_in_favorite', ]
-    list_filter = ['tag', 'author', 'name']
+    list_display += ('count_in_favorite', )
+    list_filter = ('tag', 'author', 'name')
     empty_value_display = '-пусто-'
 
 
 class RecipeIngredientAdmin(ViewSettings):
     list_display = [field.name for field in RecipeIngredient._meta.fields]
-    list_display += ['amount', ]
+    list_display += ('amount', )
     empty_value_display = '-пусто-'
 
 

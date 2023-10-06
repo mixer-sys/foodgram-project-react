@@ -6,7 +6,10 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
-from food.models import Tag, Recipe, Ingredient, Favorite, ShoppingCart
+
+from food.models import (
+    Tag, Recipe, Ingredient, Favorite, ShoppingCart, RecipeIngredient
+)
 from api.serializers import (
     TagSerializer, RecipeSerializer,
     IngredientSerializer, RecipeSmallSerializer,
@@ -15,12 +18,16 @@ from api.serializers import (
 from api.core import get_shopping_cart_txt
 from api.permissions import OwnerOrReadOnly
 from users.models import User
+from api.filters import RecipeFilterSet
+from foodgram.settings import SHOPPING_CART_FILENAME
+
+CONTENT_TYPE_SHOPPING_CART = 'text/plain; charset=UTF-8'
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, )
     pagination_class = PageNumberPagination
-    filterset_fields = ('author',)
+    filterset_class = RecipeFilterSet
     permission_classes = (IsAuthenticatedOrReadOnly, OwnerOrReadOnly)
     queryset = Recipe.objects.all()
 
@@ -34,27 +41,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         serializer.save(author=self.request.user)
-
-    def get_queryset(self):
-        params = ((self.request.query_params))
-        params = (dict(params))
-        tags = params.get('tags')
-        is_in_shopping_cart = params.get('is_in_shopping_cart')
-        is_favorited = params.get('is_favorited')
-        recipes = Recipe.objects.all()
-        if tags:
-            recipes = Recipe.objects.filter(
-                tag__slug__in=tags
-            ).distinct()
-        if is_in_shopping_cart:
-            if self.request.user.id is not None:
-                recipes = recipes.filter(
-                    shoppingcarts__user=self.request.user)
-        if is_favorited:
-            if self.request.user.id is not None:
-                recipes = recipes.filter(
-                    favorites__user=self.request.user)
-        return recipes.all()
 
 
 class APITag(APIView):
@@ -85,12 +71,11 @@ class APIIngredient(APIView):
 
 class APIFavorite(APIView):
     def post(self, request, *args, **kwargs):
-        recipe = Recipe.objects.filter(id=kwargs.get('recipe_id'))
-        if not recipe.exists():
+        recipe = Recipe.objects.filter(id=kwargs.get('recipe_id')).first()
+        if not recipe:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        recipe = recipe.first()
-        favorite = recipe.favorites.filter(user=request.user)
-        if favorite.exists():
+        favorite = recipe.favorites.filter(user=request.user).first()
+        if favorite:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         Favorite(
             user=request.user, recipe_id=kwargs.get('recipe_id')).save()
@@ -113,12 +98,13 @@ class APIShoppingCart(APIView):
 
     def get(self, request, recipe_id=None):
         user = get_object_or_404(User, username=request.user)
-        shoppingcartrecipes = user.shoppingcartrecipes.all()
-        shopping_cart_txt = get_shopping_cart_txt(shoppingcartrecipes)
+        recipes_ingredients = RecipeIngredient.objects.filter(
+            recipe__shopping_carts__user=user)
+        shopping_cart_txt = get_shopping_cart_txt(recipes_ingredients)
         response = HttpResponse(
-            shopping_cart_txt, content_type='text/plain; charset=UTF-8')
+            shopping_cart_txt, content_type=CONTENT_TYPE_SHOPPING_CART)
         response['Content-Disposition'] = (
-            'attachment; filename=shoppingcart.txt')
+            f'attachment; filename={SHOPPING_CART_FILENAME}')
         return response
 
     def post(self, request, *args, **kwargs):
@@ -126,7 +112,7 @@ class APIShoppingCart(APIView):
         if not recipe.exists():
             return Response(status=status.HTTP_400_BAD_REQUEST)
         recipe = recipe.first()
-        shopping_cart = recipe.shoppingcarts.filter(user=request.user)
+        shopping_cart = recipe.shopping_carts.filter(user=request.user)
         if shopping_cart.exists():
             return Response(status=status.HTTP_400_BAD_REQUEST)
         ShoppingCart(
@@ -140,7 +126,7 @@ class APIShoppingCart(APIView):
         recipe = get_object_or_404(Recipe, id=kwargs.get('recipe_id'))
         if recipe is None:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        shopping_cart = recipe.shoppingcarts.filter(user=request.user)
+        shopping_cart = recipe.shopping_carts.filter(user=request.user)
         if not shopping_cart.exists():
             return Response(status=status.HTTP_400_BAD_REQUEST)
         shopping_cart.delete()

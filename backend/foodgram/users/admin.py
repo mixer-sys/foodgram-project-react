@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.db import models
 from django.forms import Textarea
+
 from users.models import User, Subscription
 
 
@@ -14,7 +15,7 @@ class ViewSettings(admin.ModelAdmin):
 class UserAdmin(ViewSettings):
     list_display = [field.name for field in User._meta.fields]
     empty_value_display = '-пусто-'
-    list_filter = ['username', 'email']
+    list_filter = ('username', 'email')
 
 
 class SubscriptionAdmin(ViewSettings):

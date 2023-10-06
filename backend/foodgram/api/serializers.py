@@ -1,8 +1,14 @@
 import base64
 
+from django.db import transaction
 from django.core.files.base import ContentFile
 from django.forms.models import model_to_dict
 from rest_framework import serializers
+
+from foodgram.settings import (
+    MAX_INGREDIENTS_AMOUNT, MIN_INGREDIENTS_AMOUNT,
+    MIN_COOKING_TIME
+)
 from food.models import Favorite, Ingredient, Recipe
 from food.models import RecipeIngredient, RecipeTag, ShoppingCart, Tag
 from users.models import User
@@ -13,6 +19,7 @@ REQUIRED_TAGS_ERROR = 'Required tags'
 REQUIRED_IMAGE_ERROR = 'Required image'
 NO_SUCH_INGREDIENTS_ERROR = 'No such ingredient'
 FEW_INGREDIENTS_ERROR = 'Few ingredients'
+MANY_INGREDIENTS_ERROR = 'Too many ingredients'
 NOT_UNIQUE_INGREDIENTS_ERROR = 'There are not uniq ingredients'
 NOT_UNIQUE_TAGS_ERROR = 'There are not uniq tags'
 COOKING_TIME_ERROR = 'Cooking time should be more than 1'
@@ -70,8 +77,12 @@ class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientPrimaryKeyRelatedField(
         many=True, queryset=Ingredient.objects.all(),
     )
-    is_favorited = serializers.SerializerMethodField()
-    is_in_shopping_cart = serializers.SerializerMethodField()
+    is_favorited = serializers.SerializerMethodField(
+        method_name='get_is_favorited'
+    )
+    is_in_shopping_cart = serializers.SerializerMethodField(
+        method_name='get_is_in_shopping_cart'
+    )
     image = Base64ImageField(allow_null=True)
 
     class Meta:
@@ -101,6 +112,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 class RecipeCreateSerializer(RecipeSerializer):
     ingredients = IngredientCreateSerializer(many=True)
 
+    @transaction.atomic
     def create(self, validated_data):
         if 'ingredients' not in validated_data:
             raise serializers.ValidationError(REQUIRED_INGREDIENTS_ERROR)
@@ -111,28 +123,30 @@ class RecipeCreateSerializer(RecipeSerializer):
         if 'image' not in validated_data:
             raise serializers.ValidationError(REQUIRED_IMAGE_ERROR)
         image = validated_data.pop('image')
-        recipe, status = Recipe.objects.get_or_create(**validated_data)
+        recipe, _ = Recipe.objects.get_or_create(**validated_data)
         recipe.image = image
         recipe.save()
         for tag in tags:
-            tag, status = RecipeTag.objects.get_or_create(
+            tag, _ = RecipeTag.objects.get_or_create(
                 recipe=recipe, tag=tag
             )
         for ingredient in ingredients:
             id = ingredient.get('id')
             amount = ingredient.get('amount')
             table_ingredient = Ingredient.objects.get(id=id)
-            ingredient, status = Ingredient.objects.get_or_create(
+            ingredient, _ = Ingredient.objects.get_or_create(
                 name=table_ingredient.name,
                 measurement_unit=table_ingredient.measurement_unit,
                 amount=amount
             )
-            recipe_ingredient, status = RecipeIngredient.objects.get_or_create(
+            recipe_ingredient, _ = RecipeIngredient.objects.get_or_create(
                 recipe=recipe, ingredient=ingredient
             )
         return recipe
 
+    @transaction.atomic
     def update(self, instance, validated_data):
+        Recipe.objects.get(**validated_data).delete()
         return self.create(validated_data)
 
     def validate_ingredients(self, value):
@@ -142,8 +156,10 @@ class RecipeCreateSerializer(RecipeSerializer):
         for ingredient in value:
             if not Ingredient.objects.filter(id=ingredient.get('id')).exists():
                 raise serializers.ValidationError(NO_SUCH_INGREDIENTS_ERROR)
-            if ingredient.get('amount') < 1:
+            if ingredient.get('amount') < MIN_INGREDIENTS_AMOUNT:
                 raise serializers.ValidationError(FEW_INGREDIENTS_ERROR)
+            if ingredient.get('amount') > MAX_INGREDIENTS_AMOUNT:
+                raise serializers.ValidationError(MANY_INGREDIENTS_ERROR)
             keys.append(ingredient.get('id'))
         if len(keys) > len(set(keys)):
             raise serializers.ValidationError(NOT_UNIQUE_INGREDIENTS_ERROR)
@@ -160,7 +176,7 @@ class RecipeCreateSerializer(RecipeSerializer):
         return value
 
     def validate_cooking_time(self, value):
-        if value < 1:
+        if value < MIN_COOKING_TIME:
             raise serializers.ValidationError(
                 COOKING_TIME_ERROR)
         return value
@@ -175,9 +191,15 @@ class RecipeSmallSerializer(serializers.ModelSerializer):
 
 
 class SubscribeSerializer(serializers.ModelSerializer):
-    recipes = serializers.SerializerMethodField()
-    is_subscribed = serializers.SerializerMethodField()
-    recipes_count = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField(
+        method_name='get_recipes'
+    )
+    is_subscribed = serializers.SerializerMethodField(
+        method_name='get_is_subscribed'
+    )
+    recipes_count = serializers.SerializerMethodField(
+        method_name='get_recipes_count'
+    )
 
     class Meta:
         model = User

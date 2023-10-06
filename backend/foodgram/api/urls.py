@@ -1,5 +1,6 @@
 from django.urls import include, path
 from rest_framework.routers import SimpleRouter
+
 from api.views import APITag, APIIngredient
 from api.views import APIFavorite
 from api.views import APIShoppingCart, RecipeViewSet

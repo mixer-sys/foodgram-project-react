@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from djoser.serializers import UserCreateSerializer
+
 from users.models import Subscription
 
 
@@ -11,7 +12,9 @@ class UserCreateSerializer(UserCreateSerializer):
 
 
 class UserSerializer(UserCreateSerializer):
-    is_subscribed = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField(
+        method_name='get_is_subscribed'
+    )
 
     class Meta(UserCreateSerializer.Meta):
         fields = ('email', 'id', 'username',

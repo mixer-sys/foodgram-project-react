@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from djoser.views import UserViewSet
+
 from api.serializers import SubscribeSerializer
 from users.models import Subscription, User
 
