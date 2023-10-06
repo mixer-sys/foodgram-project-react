@@ -4,13 +4,17 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from djoser.views import UserViewSet
 
 from api.serializers import SubscribeSerializer
+from api.permissions import OwnerOrReadOnly
 from users.models import Subscription, User
 
 
 class APISubscription(APIView, LimitOffsetPagination):
+    permission_classes = (OwnerOrReadOnly, IsAuthenticatedOrReadOnly)
+
     def get(self, request, user_id=None):
         queryset = User.objects.filter(subscribers__subscriber=request.user)
         results = self.paginate_queryset(queryset, request, view=self)
@@ -48,8 +52,6 @@ class APISubscription(APIView, LimitOffsetPagination):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
         user_id = kwargs.get('user_id')
         user = get_object_or_404(User, id=user_id)
         if not user:

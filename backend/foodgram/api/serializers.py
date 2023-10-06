@@ -146,7 +146,8 @@ class RecipeCreateSerializer(RecipeSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        Recipe.objects.get(**validated_data).delete()
+        Recipe.objects.get(id=instance.id).delete()
+        validated_data['id'] = instance.id
         return self.create(validated_data)
 
     def validate_ingredients(self, value):

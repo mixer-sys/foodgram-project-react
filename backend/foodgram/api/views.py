@@ -1,7 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
@@ -17,8 +16,9 @@ from api.serializers import (
 )
 from api.core import get_shopping_cart_txt
 from api.permissions import OwnerOrReadOnly
-from users.models import User
+from api.pagination import RecipePageNumberPagination
 from api.filters import RecipeFilterSet
+from users.models import User
 from foodgram.settings import SHOPPING_CART_FILENAME
 
 CONTENT_TYPE_SHOPPING_CART = 'text/plain; charset=UTF-8'
@@ -26,7 +26,7 @@ CONTENT_TYPE_SHOPPING_CART = 'text/plain; charset=UTF-8'
 
 class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, )
-    pagination_class = PageNumberPagination
+    pagination_class = RecipePageNumberPagination
     filterset_class = RecipeFilterSet
     permission_classes = (IsAuthenticatedOrReadOnly, OwnerOrReadOnly)
     queryset = Recipe.objects.all()
@@ -70,6 +70,8 @@ class APIIngredient(APIView):
 
 
 class APIFavorite(APIView):
+    permission_classes = (OwnerOrReadOnly, IsAuthenticatedOrReadOnly)
+
     def post(self, request, *args, **kwargs):
         recipe = Recipe.objects.filter(id=kwargs.get('recipe_id')).first()
         if not recipe:
@@ -83,8 +85,6 @@ class APIFavorite(APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
         recipe = get_object_or_404(Recipe, id=kwargs.get('recipe_id'))
         favorite = recipe.favorites.filter(user=request.user)
         if not favorite.exists():
@@ -94,7 +94,7 @@ class APIFavorite(APIView):
 
 
 class APIShoppingCart(APIView):
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (OwnerOrReadOnly, IsAuthenticatedOrReadOnly)
 
     def get(self, request, recipe_id=None):
         user = get_object_or_404(User, username=request.user)
@@ -121,8 +121,6 @@ class APIShoppingCart(APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
         recipe = get_object_or_404(Recipe, id=kwargs.get('recipe_id'))
         if recipe is None:
             return Response(status=status.HTTP_400_BAD_REQUEST)

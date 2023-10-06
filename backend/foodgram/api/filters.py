@@ -24,5 +24,5 @@ class RecipeFilterSet(FilterSet):
 
     def filter_is_in_shopping_cart(self, qs, name, value):
         if self.request.user.id is not None:
-            return qs.filter(shoppingcarts__user=self.request.user)
+            return qs.filter(shopping_carts__user=self.request.user)
         return qs
