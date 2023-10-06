@@ -1,5 +1,7 @@
 from colorfield.fields import ColorField
+
 from django.db import models
+
 from users.models import User
 
 
@@ -199,13 +201,13 @@ class ShoppingCart(models.Model):
         User,
         verbose_name='Пользователь',
         on_delete=models.CASCADE,
-        related_name='shoppingcartrecipes'
+        related_name='shopping_cart_recipes'
     )
     recipe = models.ForeignKey(
         'Recipe',
         verbose_name='Рецепт',
         on_delete=models.CASCADE,
-        related_name="shoppingcarts"
+        related_name='shopping_carts'
     )
 
     class Meta:

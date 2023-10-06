@@ -1,22 +1,16 @@
-def get_shopping_cart_txt(shoppingcartrecipes):
-    ingredients_amounts = dict()
-    ingredients_measurement_unit = dict()
-    for shoppingcartrecipe in shoppingcartrecipes:
-        recipe = shoppingcartrecipe.recipe
-        ingredients = recipe.ingredients.all()
-        for recipeingredient in ingredients:
-            name = recipeingredient.ingredient.name
-            measurement_unit = recipeingredient.ingredient.measurement_unit
-            amount = recipeingredient.ingredient.amount
-            if name in ingredients_amounts:
-                ingredients_amounts[name] += amount
-            else:
-                ingredients_amounts[name] = amount
-                ingredients_measurement_unit[name] = measurement_unit
+from django.db.models import Sum
+
+
+def get_shopping_cart_txt(recipes_ingredients):
     file = ''
-    for name in ingredients_amounts:
-        measurement_unit = ingredients_measurement_unit.get(name)
-        amount = ingredients_amounts.get(name)
-        line = f'*** {name} ({measurement_unit}) -- {amount}\n'
-        file += line
+    for recipe_ingredient in recipes_ingredients:
+        ingredient = recipe_ingredient.ingredient
+        name = ingredient.name
+        measurement_unit = ingredient.measurement_unit
+        amount_sum = recipes_ingredients.filter(
+            ingredient__name=name).aggregate(
+                Sum('ingredient__amount')).get('ingredient__amount__sum')
+        line = f'*** {name} ({measurement_unit}) -- {amount_sum}\n'
+        if line not in file:
+            file += line
     return file
