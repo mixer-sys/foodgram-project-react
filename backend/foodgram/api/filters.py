@@ -15,7 +15,7 @@ class RecipeFilterSet(FilterSet):
     def filter_tags(self, qs, name, value):
         params = dict(self.request.query_params)
         tags = params.get('tags')
-        return qs.filter(tag__slug__in=tags)
+        return qs.filter(tag__slug__in=tags).distinct()
 
     def filter_is_favorited(self, qs, name, value):
         if self.request.user.id is not None:

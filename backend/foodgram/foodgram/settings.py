@@ -13,7 +13,6 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG')
 
 ALLOWED_HOSTS = [host[1:-1] for host in os.getenv('ALLOWED_HOSTS').strip('[]').split(', ')]
-
 CSRF_TRUSTED_ORIGINS = [host[1:-1] for host in os.getenv('CSRF_TRUSTED_ORIGINS').strip('[]').split(', ')]
 
 INSTALLED_APPS = [
