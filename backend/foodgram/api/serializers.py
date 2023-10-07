@@ -7,7 +7,7 @@ from rest_framework import serializers
 
 from foodgram.settings import (
     MAX_INGREDIENTS_AMOUNT, MIN_INGREDIENTS_AMOUNT,
-    MIN_COOKING_TIME
+    MIN_COOKING_TIME, MAX_COOKING_TIME
 )
 from food.models import Favorite, Ingredient, Recipe
 from food.models import RecipeIngredient, RecipeTag, ShoppingCart, Tag
@@ -22,7 +22,8 @@ FEW_INGREDIENTS_ERROR = 'Few ingredients'
 MANY_INGREDIENTS_ERROR = 'Too many ingredients'
 NOT_UNIQUE_INGREDIENTS_ERROR = 'There are not uniq ingredients'
 NOT_UNIQUE_TAGS_ERROR = 'There are not uniq tags'
-COOKING_TIME_ERROR = 'Cooking time should be more than 1'
+COOKING_TIME_ERROR = (f'Cooking time should be more than {MIN_COOKING_TIME}'
+                      ' and less than {MAX_COOKING_TIME}')
 
 
 class Base64ImageField(serializers.ImageField):
@@ -177,7 +178,7 @@ class RecipeCreateSerializer(RecipeSerializer):
         return value
 
     def validate_cooking_time(self, value):
-        if value < MIN_COOKING_TIME:
+        if not (MAX_COOKING_TIME > value > MIN_COOKING_TIME):
             raise serializers.ValidationError(
                 COOKING_TIME_ERROR)
         return value

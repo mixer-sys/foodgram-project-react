@@ -1,8 +1,13 @@
 from colorfield.fields import ColorField
 
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 from users.models import User
+from foodgram.settings import (
+    MIN_COOKING_TIME, MAX_COOKING_TIME,
+    MIN_INGREDIENTS_AMOUNT, MAX_INGREDIENTS_AMOUNT
+)
 
 
 class Tag(models.Model):
@@ -70,7 +75,11 @@ class Recipe(models.Model):
     cooking_time = models.PositiveSmallIntegerField(
         'Время',
         help_text='Время приготовления (в минутах)',
-        blank=False
+        blank=False,
+        validators=(
+            MaxValueValidator(MAX_COOKING_TIME),
+            MinValueValidator(MIN_COOKING_TIME)
+        )
     )
     ingredient = models.ManyToManyField(
         'Ingredient',
@@ -109,7 +118,7 @@ class RecipeIngredient(models.Model):
         'Ingredient',
         verbose_name='Ингредиент',
         on_delete=models.CASCADE,
-        related_name='recipes'
+        related_name='recipes',
     )
 
     class Meta:
@@ -168,6 +177,10 @@ class Ingredient(models.Model):
         'Количество',
         help_text='Количество ингредиентов',
         null=True,
+        validators=(
+            MaxValueValidator(MAX_INGREDIENTS_AMOUNT),
+            MinValueValidator(MIN_INGREDIENTS_AMOUNT)
+        )
     )
 
     class Meta:
