@@ -18,12 +18,8 @@ REQUIRED_INGREDIENTS_ERROR = 'Required ingredients'
 REQUIRED_TAGS_ERROR = 'Required tags'
 REQUIRED_IMAGE_ERROR = 'Required image'
 NO_SUCH_INGREDIENTS_ERROR = 'No such ingredient'
-FEW_INGREDIENTS_ERROR = '''{
-            "amount": [
-                "Убедитесь, что это значение больше либо равно 1."
-            ]
-        }
-'''
+FEW_INGREDIENTS_ERROR = ('{"amount": ["Убедитесь, что это значение больше'
+                         ' либо равно 1."]}')
 MANY_INGREDIENTS_ERROR = 'Too many ingredients'
 NOT_UNIQUE_INGREDIENTS_ERROR = 'There are not uniq ingredients'
 NOT_UNIQUE_TAGS_ERROR = 'There are not uniq tags'
