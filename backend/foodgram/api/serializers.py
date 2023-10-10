@@ -14,17 +14,19 @@ from food.models import RecipeIngredient, RecipeTag, ShoppingCart, Tag
 from users.models import User
 from users.serializers import UserSerializer
 
-REQUIRED_INGREDIENTS_ERROR = 'Required ingredients'
-REQUIRED_TAGS_ERROR = 'Required tags'
-REQUIRED_IMAGE_ERROR = 'Required image'
-NO_SUCH_INGREDIENTS_ERROR = 'No such ingredient'
-FEW_INGREDIENTS_ERROR = ('Убедитесь, что это значение больше'
-                         ' либо равно 1.')
-MANY_INGREDIENTS_ERROR = 'Too many ingredients'
-NOT_UNIQUE_INGREDIENTS_ERROR = 'There are not uniq ingredients'
-NOT_UNIQUE_TAGS_ERROR = 'There are not uniq tags'
-COOKING_TIME_ERROR = (f'Cooking time should be more than {MIN_COOKING_TIME}'
-                      ' and less than {MAX_COOKING_TIME}')
+REQUIRED_INGREDIENTS_ERROR = 'Требуются ингредиенты'
+REQUIRED_TAGS_ERROR = 'Требуются тэги'
+REQUIRED_IMAGE_ERROR = 'Требуется изображение'
+NO_SUCH_INGREDIENTS_ERROR = 'Нет такого ингредиета'
+FEW_INGREDIENTS_ERROR = ('Количество ингредиента должно быть'
+                         f' больше {MIN_INGREDIENTS_AMOUNT}')
+MANY_INGREDIENTS_ERROR = ('Количество ингредиента должно быть'
+                          f' меньше {MAX_INGREDIENTS_AMOUNT}')
+NOT_UNIQUE_INGREDIENTS_ERROR = 'Ингредиенты должны быть уникальными'
+NOT_UNIQUE_TAGS_ERROR = 'Тэги должны быть уникальными'
+COOKING_TIME_ERROR = ('Время приготовления должно быть больше'
+                      f' {MIN_COOKING_TIME}'
+                      f' и меньше {MAX_COOKING_TIME}')
 
 
 class Base64ImageField(serializers.ImageField):
@@ -69,9 +71,16 @@ class IngredientCreateSerializer(serializers.ModelSerializer):
     def to_representation(self, value):
         return model_to_dict(value.ingredient)
 
+    def validate_id(self, value):
+        if not Ingredient.objects.filter(id=value).exists():
+            raise serializers.ValidationError(NO_SUCH_INGREDIENTS_ERROR)
+        return value
+
     def validate_amount(self, value):
         if value < MIN_INGREDIENTS_AMOUNT:
             raise serializers.ValidationError(FEW_INGREDIENTS_ERROR)
+        if value > MAX_INGREDIENTS_AMOUNT:
+            raise serializers.ValidationError(MANY_INGREDIENTS_ERROR)
         return value
 
 
@@ -153,8 +162,10 @@ class RecipeCreateSerializer(RecipeSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        Recipe.objects.get(id=instance.id).delete()
+        recipe = Recipe.objects.get(id=instance.id)
         validated_data['id'] = instance.id
+        validated_data['image'] = recipe.image
+        recipe.delete()
         return self.create(validated_data)
 
     def validate_ingredients(self, value):
@@ -162,12 +173,6 @@ class RecipeCreateSerializer(RecipeSerializer):
             raise serializers.ValidationError(REQUIRED_INGREDIENTS_ERROR)
         keys = list()
         for ingredient in value:
-            if not Ingredient.objects.filter(id=ingredient.get('id')).exists():
-                raise serializers.ValidationError(NO_SUCH_INGREDIENTS_ERROR)
-            if ingredient.get('amount') < MIN_INGREDIENTS_AMOUNT:
-                raise serializers.ValidationError(FEW_INGREDIENTS_ERROR)
-            if ingredient.get('amount') > MAX_INGREDIENTS_AMOUNT:
-                raise serializers.ValidationError(MANY_INGREDIENTS_ERROR)
             keys.append(ingredient.get('id'))
         if len(keys) > len(set(keys)):
             raise serializers.ValidationError(NOT_UNIQUE_INGREDIENTS_ERROR)
