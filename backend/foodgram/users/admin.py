@@ -13,13 +13,18 @@ class ViewSettings(admin.ModelAdmin):
 
 
 class UserAdmin(ViewSettings):
-    list_display = [field.name for field in User._meta.fields]
+    list_display = ['id', 'username', 'first_name',
+                    'last_name', 'email', 'is_staff', 'is_active',
+                    'last_login', 'date_joined', 'role']
     empty_value_display = '-пусто-'
-    list_filter = ('username', 'email')
+    list_filter = ('is_staff', 'is_active')
+    search_fields = ('username', 'email')
 
 
 class SubscriptionAdmin(ViewSettings):
     list_display = [field.name for field in Subscription._meta.fields]
+    search_fields = ('user__email', 'user__username', 'subscriber__email',
+                     'subscriber__username')
     empty_value_display = '-пусто-'
 
 
